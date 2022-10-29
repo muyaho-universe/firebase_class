@@ -19,7 +19,6 @@ import 'src/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'guest_book.dart';
 
-
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -234,6 +233,7 @@ class ApplicationState extends ChangeNotifier {
               GuestBookMessage(
                 name: document.data()['name'] as String,
                 message: document.data()['text'] as String,
+                time: document.data()['timestamp'].toString(),
               ),
             );
           }
@@ -273,7 +273,7 @@ class ApplicationState extends ChangeNotifier {
         .collection('guestbook')
         .add(<String, dynamic>{
       'text': message,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'timestamp': DateTime.now().toString(),
       'name': FirebaseAuth.instance.currentUser!.displayName,
       'userId': FirebaseAuth.instance.currentUser!.uid,
     });
