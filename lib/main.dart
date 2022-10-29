@@ -1,3 +1,4 @@
+import 'package:firebase_class/yes_no_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async'; // new
@@ -10,6 +11,7 @@ import 'package:firebase_ui_auth/firebase_ui_auth.dart'; // new
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart'; // new
+import 'attending.dart';
 import 'firebase_options.dart'; // new
 import 'guest_book_message.dart';
 import 'src/authentication.dart';
@@ -144,7 +146,18 @@ class HomePage extends StatelessWidget {
             builder: (context, appState, _) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (appState.attendees >= 2)
+                  Paragraph('${appState.attendees} people going')
+                else if (appState.attendees == 1)
+                  const Paragraph('1 person going')
+                else
+                  const Paragraph('No one going'),
                 if (appState.loggedIn) ...[
+                  YesNoSelection(
+                    state: appState.attending,
+                    onSelection: (attending) => appState.attending = attending,
+                  ),
+
                   const Header('Discussion'),
                   GuestBook(
                     addMessage: (message) =>
@@ -165,6 +178,22 @@ class ApplicationState extends ChangeNotifier {
   ApplicationState() {
     init();
   }
+  int _attendees = 0;
+  int get attendees => _attendees;
+
+  Attending _attending = Attending.unknown;
+  StreamSubscription<DocumentSnapshot>? _attendingSubscription;
+  Attending get attending => _attending;
+  set attending(Attending attending) {
+    final userDoc = FirebaseFirestore.instance
+        .collection('attendees')
+        .doc(FirebaseAuth.instance.currentUser!.uid);
+    if (attending == Attending.yes) {
+      userDoc.set(<String, dynamic>{'attending': true});
+    } else {
+      userDoc.set(<String, dynamic>{'attending': false});
+    }
+  }
 
   bool _loggedIn = false;
 
@@ -181,6 +210,15 @@ class ApplicationState extends ChangeNotifier {
     FirebaseUIAuth.configureProviders([
       EmailAuthProvider(),
     ]);
+
+    FirebaseFirestore.instance
+        .collection('attendees')
+        .where('attending', isEqualTo: true)
+        .snapshots()
+        .listen((snapshot) {
+      _attendees = snapshot.docs.length;
+      notifyListeners();
+    });
 
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
@@ -201,10 +239,27 @@ class ApplicationState extends ChangeNotifier {
           }
           notifyListeners();
         });
+        _attendingSubscription = FirebaseFirestore.instance
+            .collection('attendees')
+            .doc(user.uid)
+            .snapshots()
+            .listen((snapshot) {
+          if (snapshot.data() != null) {
+            if (snapshot.data()!['attending'] as bool) {
+              _attending = Attending.yes;
+            } else {
+              _attending = Attending.no;
+            }
+          } else {
+            _attending = Attending.unknown;
+          }
+          notifyListeners();
+        });
       } else {
         _loggedIn = false;
         _guestBookMessages = [];
         _guestBookSubscription?.cancel();
+        _attendingSubscription?.cancel();
       }
       notifyListeners();
     });
@@ -224,5 +279,3 @@ class ApplicationState extends ChangeNotifier {
     });
   }
 }
-
-
