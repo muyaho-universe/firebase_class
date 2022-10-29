@@ -11,9 +11,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart'; // new
 import 'firebase_options.dart'; // new
+import 'guest_book_message.dart';
 import 'src/authentication.dart';
 import 'src/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'guest_book.dart';
 
 
 void main() {
@@ -120,6 +122,13 @@ class HomePage extends StatelessWidget {
           const SizedBox(height: 8),
           const IconAndDetail(Icons.calendar_today, 'October 30'),
           const IconAndDetail(Icons.location_city, 'San Francisco'),
+          Consumer<ApplicationState>(
+            builder: (context, appState, _) => AuthFunc(
+                loggedIn: appState.loggedIn,
+                signOut: () {
+                  FirebaseAuth.instance.signOut();
+                }),
+          ),
           const Divider(
             height: 8,
             thickness: 1,
@@ -130,6 +139,21 @@ class HomePage extends StatelessWidget {
           const Header("What we'll be doing"),
           const Paragraph(
             'Join us for a day full of Firebase Workshops and Pizza!',
+          ),
+          Consumer<ApplicationState>(
+            builder: (context, appState, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (appState.loggedIn) ...[
+                  const Header('Discussion'),
+                  GuestBook(
+                    addMessage: (message) =>
+                        appState.addMessageToGuestBook(message),
+                    messages: appState.guestBookMessages,
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -146,6 +170,10 @@ class ApplicationState extends ChangeNotifier {
 
   bool get loggedIn => _loggedIn;
 
+  StreamSubscription<QuerySnapshot>? _guestBookSubscription;
+  List<GuestBookMessage> _guestBookMessages = [];
+  List<GuestBookMessage> get guestBookMessages => _guestBookMessages;
+
   Future<void> init() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
@@ -157,10 +185,44 @@ class ApplicationState extends ChangeNotifier {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
         _loggedIn = true;
+        _guestBookSubscription = FirebaseFirestore.instance
+            .collection('guestbook')
+            .orderBy('timestamp', descending: true)
+            .snapshots()
+            .listen((snapshot) {
+          _guestBookMessages = [];
+          for (final document in snapshot.docs) {
+            _guestBookMessages.add(
+              GuestBookMessage(
+                name: document.data()['name'] as String,
+                message: document.data()['text'] as String,
+              ),
+            );
+          }
+          notifyListeners();
+        });
       } else {
         _loggedIn = false;
+        _guestBookMessages = [];
+        _guestBookSubscription?.cancel();
       }
       notifyListeners();
     });
   }
+  Future<DocumentReference> addMessageToGuestBook(String message) {
+    if (!_loggedIn) {
+      throw Exception('Must be logged in');
+    }
+
+    return FirebaseFirestore.instance
+        .collection('guestbook')
+        .add(<String, dynamic>{
+      'text': message,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'name': FirebaseAuth.instance.currentUser!.displayName,
+      'userId': FirebaseAuth.instance.currentUser!.uid,
+    });
+  }
 }
+
+
