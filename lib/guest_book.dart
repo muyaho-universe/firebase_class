@@ -82,20 +82,17 @@ class _GuestBookState extends State<GuestBook> {
 
 Widget Message(
     String name, String message, String time, String? currentId, double width) {
-  return Padding(
+  return (name == currentId) ? SizedBox(
+    width: width * 4 / 5,
+    child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SizedBox(
-            width: width * 3 / 5,
+          Flexible(
             child: RichText(
+              maxLines: 100,
               text: TextSpan(
-                // Note: Styles for TextSpans must be explicitly defined.
-                // Child text spans will inherit styles from parent
-                style: const TextStyle(
-                  fontSize: 18.0,
-                  color: Colors.black,
-                ),
                 children: <TextSpan>[
                   TextSpan(text: name),
                   TextSpan(text: ': '),
@@ -103,11 +100,50 @@ Widget Message(
                   TextSpan(text: '\n'),
                   TextSpan(text: time, style: const TextStyle(fontSize: 10)),
                 ],
+                style: const TextStyle(
+                  fontSize: 18.0,
+                  color: Colors.black,
+                ),
               ),
             ),
           ),
-          Icon(Icons.dangerous_outlined),
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+             Icons.delete_outlined,
+            ),
+          ),
         ],
       ),
+    ),
+  ):SizedBox(
+    width: width * 4 / 5,
+    child: Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: RichText(
+              maxLines: 100,
+              text: TextSpan(
+                children: <TextSpan>[
+                  TextSpan(text: name),
+                  TextSpan(text: ': '),
+                  TextSpan(text: message),
+                  TextSpan(text: '\n'),
+                  TextSpan(text: time, style: const TextStyle(fontSize: 10)),
+                ],
+                style: const TextStyle(
+                  fontSize: 18.0,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+          Icon(null),
+        ],
+      ),
+    ),
   );
 }
