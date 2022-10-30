@@ -156,7 +156,6 @@ class HomePage extends StatelessWidget {
                     state: appState.attending,
                     onSelection: (attending) => appState.attending = attending,
                   ),
-
                   const Header('Discussion'),
                   GuestBook(
                     addMessage: (message) =>
