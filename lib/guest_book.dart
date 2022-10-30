@@ -1,10 +1,14 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_class/src/widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'guest_book_message.dart';
+
+final FirebaseFirestore db =FirebaseFirestore.instance;
 
 class GuestBook extends StatefulWidget {
   const GuestBook(
@@ -24,6 +28,8 @@ class GuestBook extends StatefulWidget {
 class _GuestBookState extends State<GuestBook> {
   final _formKey = GlobalKey<FormState>(debugLabel: '_GuestBookState');
   final _controller = TextEditingController();
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -80,70 +86,79 @@ class _GuestBookState extends State<GuestBook> {
   }
 }
 
-Widget Message(
-    String name, String message, String time, String? currentId, double width) {
-  return (name == currentId) ? SizedBox(
-    width: width * 4 / 5,
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: RichText(
-              maxLines: 100,
-              text: TextSpan(
-                children: <TextSpan>[
-                  TextSpan(text: name),
-                  TextSpan(text: ': '),
-                  TextSpan(text: message),
-                  TextSpan(text: '\n'),
-                  TextSpan(text: time, style: const TextStyle(fontSize: 10)),
-                ],
-                style: const TextStyle(
-                  fontSize: 18.0,
-                  color: Colors.black,
+Widget Message(String name, String message, String time, String? currentId,
+    double width) {
+  return (name == currentId)
+      ? SizedBox(
+          width: width * 4 / 5,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: RichText(
+                    maxLines: 100,
+                    text: TextSpan(
+                      children: <TextSpan>[
+                        TextSpan(text: name),
+                        TextSpan(text: ': '),
+                        TextSpan(text: message),
+                        TextSpan(text: '\n'),
+                        TextSpan(
+                            text: time, style: const TextStyle(fontSize: 10)),
+                      ],
+                      style: const TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-             Icons.delete_outlined,
-            ),
-          ),
-        ],
-      ),
-    ),
-  ):SizedBox(
-    width: width * 4 / 5,
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: RichText(
-              maxLines: 100,
-              text: TextSpan(
-                children: <TextSpan>[
-                  TextSpan(text: name),
-                  TextSpan(text: ': '),
-                  TextSpan(text: message),
-                  TextSpan(text: '\n'),
-                  TextSpan(text: time, style: const TextStyle(fontSize: 10)),
-                ],
-                style: const TextStyle(
-                  fontSize: 18.0,
-                  color: Colors.black,
+                IconButton(
+                  onPressed: () {
+                    db.collection('guestbook').doc(FirebaseAuth.instance.currentUser!.uid).delete().then(
+                          (doc) => print("Document deleted"),
+                      onError: (e) => print("Error updating document $e\n ${FirebaseAuth.instance.currentUser!.uid}"),
+                    );
+                  },
+                  icon: Icon(
+                    Icons.delete_outlined,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-          Icon(null),
-        ],
-      ),
-    ),
-  );
+        )
+      : SizedBox(
+          width: width * 4 / 5,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: RichText(
+                    maxLines: 100,
+                    text: TextSpan(
+                      children: <TextSpan>[
+                        TextSpan(text: name),
+                        TextSpan(text: ': '),
+                        TextSpan(text: message),
+                        TextSpan(text: '\n'),
+                        TextSpan(
+                            text: time, style: const TextStyle(fontSize: 10)),
+                      ],
+                      style: const TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+                Icon(null),
+              ],
+            ),
+          ),
+        );
 }
