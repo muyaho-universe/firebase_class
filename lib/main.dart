@@ -162,6 +162,7 @@ class HomePage extends StatelessWidget {
                     addMessage: (message) =>
                         appState.addMessageToGuestBook(message),
                     messages: appState.guestBookMessages,
+                    userId: FirebaseAuth.instance.currentUser!.displayName,
                   ),
                 ],
               ],
