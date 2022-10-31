@@ -29,8 +29,6 @@ class _GuestBookState extends State<GuestBook> {
   final _formKey = GlobalKey<FormState>(debugLabel: '_GuestBookState');
   final _controller = TextEditingController();
 
-  
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -117,10 +115,29 @@ Widget Message(String name, String message, String time, String? currentId,
                 ),
                 IconButton(
                   onPressed: () {
-                    db.collection('guestbook').doc(FirebaseAuth.instance.currentUser!.uid).delete().then(
-                          (doc) => print("Document deleted"),
-                      onError: (e) => print("Error updating document $e\n ${FirebaseAuth.instance.currentUser!.uid}"),
-                    );
+                    final String _collection = 'guestbook';
+                    final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+
+                    getData() async {
+                      return await _fireStore.collection(_collection).get();
+                    }
+
+                    getData().then((val){
+                      if(val.docs.length > 0){
+                        for(var doc in val.docs){
+                          if(doc.data().values.first == name && doc.data().values.last == time){
+                            print(doc.data().values);
+                            db.collection('guestbook').doc(doc.id).delete().then(
+                                  (doc) => print("Document deleted"),
+                              onError: (e) => print("Error updating document $e\n ${FirebaseAuth.instance.currentUser!.uid}"),
+                            );
+                          }
+                        }
+                      }
+                      else{
+                        print("Not Found");
+                      }
+                    });
                   },
                   icon: Icon(
                     Icons.delete_outlined,
