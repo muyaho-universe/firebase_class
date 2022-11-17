@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 
 import 'guest_book_message.dart';
 
-final FirebaseFirestore db =FirebaseFirestore.instance;
+final FirebaseFirestore db = FirebaseFirestore.instance;
 
 class GuestBook extends StatefulWidget {
   const GuestBook(
@@ -84,8 +84,8 @@ class _GuestBookState extends State<GuestBook> {
   }
 }
 
-Widget Message(String name, String message, String time, String? currentId,
-    double width) {
+Widget Message(
+    String name, String message, String time, String? currentId, double width) {
   return (name == currentId)
       ? SizedBox(
           width: width * 4 / 5,
@@ -116,25 +116,31 @@ Widget Message(String name, String message, String time, String? currentId,
                 IconButton(
                   onPressed: () {
                     final String _collection = 'guestbook';
-                    final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+                    final FirebaseFirestore _fireStore =
+                        FirebaseFirestore.instance;
 
                     getData() async {
                       return await _fireStore.collection(_collection).get();
                     }
 
-                    getData().then((val){
-                      if(val.docs.length > 0){
-                        for(var doc in val.docs){
-                          if(doc.data().values.first == name && doc.data().values.last == time){
+                    getData().then((val) {
+                      if (val.docs.length > 0) {
+                        for (var doc in val.docs) {
+                          if (doc.data().values.first == name &&
+                              doc.data().values.last == time) {
                             print(doc.data().values);
-                            db.collection('guestbook').doc(doc.id).delete().then(
+                            db
+                                .collection('guestbook')
+                                .doc(doc.id)
+                                .delete()
+                                .then(
                                   (doc) => print("Document deleted"),
-                              onError: (e) => print("Error updating document $e\n ${FirebaseAuth.instance.currentUser!.uid}"),
-                            );
+                                  onError: (e) => print(
+                                      "Error updating document $e\n ${FirebaseAuth.instance.currentUser!.uid}"),
+                                );
                           }
                         }
-                      }
-                      else{
+                      } else {
                         print("Not Found");
                       }
                     });
